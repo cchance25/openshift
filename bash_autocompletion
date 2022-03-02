@@ -1,0 +1,5 @@
+Configure "oc" bash auto-completion:
+
+# execute the following then reopen your shell
+oc completion bash >>/etc/bash_completion.d/oc_completion
+kubectl completion bash >>/etc/bash_completion.d/kubectl_completion
