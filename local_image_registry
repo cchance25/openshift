@@ -38,3 +38,8 @@ curl -u <user_name>:<password> -k https://<local_registry_host_name>:<local_regi
 
 Expected output
 {"repositories":[]}
+
+
+
+# Reference
+https://access.redhat.com/documentation/en-us/openshift_container_platform/4.3/html/images/samples-operator-alt-registry
