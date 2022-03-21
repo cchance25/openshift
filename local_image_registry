@@ -1,0 +1,40 @@
+ Install the required packages:
+
+# yum -y install podman httpd-tools
+
+
+The podman package provides the container package that you run the registry in. The httpd-tools package provides the htpasswd utility, which you use to create users.
+Create folders for the registry:
+
+# mkdir -p /opt/registry/{auth,certs,data}
+These folders are mounted inside the registry container.
+
+Provide a certificate for the registry. If you do not have an existing, trusted certificate authority, you can generate a self-signed certificate: 
+$ cd /opt/registry/certs
+# openssl req -newkey rsa:4096 -nodes -sha256 -keyout domain.key -x509 -days 365 -out domain.crt
+
+
+Generate a user name and a password for your registry that uses the bcrpt format:
+# htpasswd -bBc /opt/registry/auth/htpasswd <user_name> <password> 
+Replace <user_name> and <password> with a user name and a password. 
+    
+
+Create the mirror-registry container to host your registry:
+# podman run --name mirror-registry -p <local_registry_host_port>:5000 \ 
+     -v /opt/registry/data:/var/lib/registry:z \
+     -v /opt/registry/auth:/auth:z \
+     -e "REGISTRY_AUTH=htpasswd" \
+     -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+     -e REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd \
+     -v /opt/registry/certs:/certs:z \
+     -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt \
+     -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key \
+     -e REGISTRY_COMPATIBILITY_SCHEMA1_ENABLED=true \
+     -d docker.io/library/registry:2
+     
+
+# Test
+curl -u <user_name>:<password> -k https://<local_registry_host_name>:<local_registry_host_port>/v2/_catalog 
+
+Expected output
+{"repositories":[]}
