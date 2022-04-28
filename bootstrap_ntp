@@ -1,0 +1,66 @@
+It's possible to create an intermediate ignition file with chrony configuration and reference the original bootstrap.ign file using butane binary. 
+https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/butane/latest/
+
+    Create the following butane file and replace <web_server> and <ntp server> with the proper values.
+
+# file: chrony.bu
+
+variant: openshift
+metadata:
+  name: chrony
+  labels:
+    machineconfiguration.openshift.io/role: bootstrap
+version: 4.8.0
+ignition:
+  config:
+    merge:
+    - source: http://<web_server>/bootstrap.ign
+storage:
+  files:
+    - path: /etc/chrony.conf
+      mode: 0644
+      overwrite: true
+      contents:
+        inline: |
+          pool <ntp server>
+          driftfile /var/lib/chrony/drift
+          makestep 1.0 3
+          rtcsync
+          logdir /var/log/chrony
+ -------------
+          
+          
+ check bootstrap intermediate
+ butane -r chrony.bu -o bootstrap_intermediate.ign
+ 
+ $ jq . bootstrap_intermediate.ign
+
+  "ignition": {
+    "config": {
+      "merge": [
+        {
+          "source": "http://10.x.x.x/bootstrap.ign"
+        }
+      ]
+    },
+    "version": "3.2.0"
+  },
+  "storage": {
+    "files": [
+      {
+        "overwrite": true,
+        "path": "/etc/chrony.conf",
+        "contents": {
+          "source": "data:,pool%20x.x.x.x%0Adriftfile%20%2Fvar%2Flib%2Fchrony%2Fdrift%0Amakestep%201.0%203%0Artcsy        nc%0Alogdir%20%2Fvar%2Flog%2Fchrony%0A"
+        },
+        "mode": 420
+      }
+    ]
+  }
+}
+
+
+
+
+
+Now, it can be use as an ignition file to install the bootstrap node with proper NTP configuration
